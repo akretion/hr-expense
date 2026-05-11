@@ -360,6 +360,11 @@ class TestHrExpenseTaxDistribution(SavepointCase):
         )
 
     def test_expense_tax_amounts_standard_when_lines_all_zero(self):
+        if "amount_by_group" in self.env["hr.expense"]._fields:
+            self.skipTest(
+                "hr_expense_tax_adjust is installed and overrides _compute_amount "
+                "in an incompatible way — see readme/KNOWN_ISSUES.rst."
+            )
         expense = self._make_expense(120.0, tax_ids=self.tax_20)
         self.env["hr.expense.tax.line"].create(
             {
