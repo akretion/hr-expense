@@ -2,7 +2,6 @@
 # @author Guillaume MASSON <guillaume.masson@akretion.com>
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
 
-from odoo import Command
 from odoo.exceptions import ValidationError
 from odoo.tests.common import Form, SavepointCase, tagged
 
@@ -83,7 +82,7 @@ class TestHrExpenseTaxDistribution(SavepointCase):
             "company_id": self.company.id,
         }
         if tax_ids is not None:
-            vals["tax_ids"] = [Command.set(tax_ids.ids)]
+            vals["tax_ids"] = [(6, 0, tax_ids.ids)]
         return self.env["hr.expense"].create(vals)
 
     def _make_dist_lines(self, expense, specs):
@@ -121,7 +120,7 @@ class TestHrExpenseTaxDistribution(SavepointCase):
         line = self.env["hr.expense.tax.line"].create(
             {
                 "expense_id": expense.id,
-                "tax_ids": [Command.set(self.tax_10.ids)],
+                "tax_ids": [(6, 0, self.tax_10.ids)],
                 "base_amount_currency": 20.0,
             }
         )
@@ -135,7 +134,7 @@ class TestHrExpenseTaxDistribution(SavepointCase):
         line = self.env["hr.expense.tax.line"].create(
             {
                 "expense_id": expense.id,
-                "tax_ids": [Command.set((self.tax_10 | self.tax_eco).ids)],
+                "tax_ids": [(6, 0, (self.tax_10 | self.tax_eco).ids)],
                 "base_amount_currency": 80.0,
             }
         )
@@ -149,7 +148,7 @@ class TestHrExpenseTaxDistribution(SavepointCase):
         line = self.env["hr.expense.tax.line"].create(
             {
                 "expense_id": expense.id,
-                "tax_ids": [Command.set(self.tax_20.ids)],
+                "tax_ids": [(6, 0, self.tax_20.ids)],
                 "base_amount_currency": 0.0,
             }
         )
@@ -176,7 +175,7 @@ class TestHrExpenseTaxDistribution(SavepointCase):
     def test_has_tax_distribution_true(self):
         expense = self._make_expense(86.75)
         self._make_dist_lines(expense, [(self.tax_5, 50.0)])
-        expense.invalidate_recordset()
+        expense.invalidate_cache()
         self.assertTrue(expense.has_tax_distribution)
 
     def test_has_tax_distribution_false_when_no_lines(self):
@@ -354,7 +353,7 @@ class TestHrExpenseTaxDistribution(SavepointCase):
             expense,
             [(self.tax_5, 50.0), (self.tax_10, 20.0), (self.tax_20, 10.0)],
         )
-        expense.invalidate_recordset()
+        expense.invalidate_cache()
         self.assertAlmostEqual(expense.untaxed_amount, 80.0, places=2)
         self.assertAlmostEqual(
             expense.total_amount - expense.untaxed_amount, 6.75, places=2
@@ -365,11 +364,11 @@ class TestHrExpenseTaxDistribution(SavepointCase):
         self.env["hr.expense.tax.line"].create(
             {
                 "expense_id": expense.id,
-                "tax_ids": [Command.set(self.tax_20.ids)],
+                "tax_ids": [(6, 0, self.tax_20.ids)],
                 "base_amount_currency": 0.0,
             }
         )
-        expense.invalidate_recordset()
+        expense.invalidate_cache()
         # Standard 14.0: total_amount = unit_amount * qty * (1 + 20%) = 120 * 1.2 = 144
         # untaxed_amount = unit_amount * qty = 120
         # tax = 144 - 120 = 24
@@ -405,7 +404,7 @@ class TestHrExpenseTaxDistribution(SavepointCase):
         self.env["hr.expense.tax.line"].create(
             {
                 "expense_id": expense.id,
-                "tax_ids": [Command.set(self.tax_20.ids)],
+                "tax_ids": [(6, 0, self.tax_20.ids)],
                 "base_amount_currency": 0.0,
             }
         )
@@ -421,7 +420,7 @@ class TestHrExpenseTaxDistribution(SavepointCase):
             self.env["hr.expense.tax.line"].create(
                 {
                     "expense_id": expense.id,
-                    "tax_ids": [Command.set(self.tax_20.ids)],
+                    "tax_ids": [(6, 0, self.tax_20.ids)],
                     "base_amount_currency": -5.0,
                 }
             )
@@ -468,7 +467,7 @@ class TestHrExpenseTaxDistribution(SavepointCase):
             {
                 "name": "Restaurant Test Sheet",
                 "employee_id": self.employee.id,
-                "expense_line_ids": [Command.set(expense.ids)],
+                "expense_line_ids": [(6, 0, expense.ids)],
             }
         )
         sheet.action_submit_sheet()

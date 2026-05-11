@@ -2,7 +2,7 @@
 # @author Guillaume MASSON <guillaume.masson@akretion.com>
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
 
-from odoo import Command, _, api, fields, models
+from odoo import _, api, fields, models
 from odoo.exceptions import ValidationError
 from odoo.tools.misc import formatLang
 
@@ -47,7 +47,7 @@ class HrExpense(models.Model):
           added taxes are created with base_amount_currency = 0.
         """
         if len(self.tax_ids) <= 1:
-            self.tax_line_ids = [Command.clear()]
+            self.tax_line_ids = [(5, 0, 0)]
             return
         self.tax_line_ids = self._sync_tax_distribution_lines(self.tax_ids)
 
@@ -84,19 +84,21 @@ class HrExpense(models.Model):
         # Keep existing single-tax lines whose tax is still selected.
         for tax_id, line in existing_by_tax_id.items():
             if tax_id in current_tax_ids:
-                commands.append(Command.link(line.id))
+                commands.append((4, line.id, 0))
             else:
-                commands.append(Command.delete(line.id))
+                commands.append((2, line.id, 0))
             covered.add(tax_id)
 
         # Create new lines for taxes not yet covered.
         for tax in taxes._origin.filtered(lambda t: t.id not in covered):
             commands.append(
-                Command.create(
+                (
+                    0,
+                    0,
                     {
-                        "tax_ids": [Command.set(tax.ids)],
+                        "tax_ids": [(6, 0, tax.ids)],
                         "base_amount_currency": 0.0,
-                    }
+                    },
                 )
             )
 
@@ -122,7 +124,7 @@ class HrExpense(models.Model):
             expense.total_amount = total
             expense.untaxed_amount = total - tax_sum
 
-    @api.onchange("tax_line_ids", "tax_line_ids.base_amount_currency")
+    @api.onchange("tax_line_ids")
     def _onchange_tax_line_ids_recompute_amount(self):
         self._compute_amount()
 
