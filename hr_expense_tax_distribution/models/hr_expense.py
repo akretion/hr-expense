@@ -105,10 +105,7 @@ class HrExpense(models.Model):
         return commands
 
     @api.depends(
-        "quantity",
-        "unit_amount",
-        "tax_ids",
-        "currency_id",
+        "has_tax_distribution",
         "tax_line_ids",
         "tax_line_ids.base_amount_currency",
         "tax_line_ids.tax_amount_currency",
